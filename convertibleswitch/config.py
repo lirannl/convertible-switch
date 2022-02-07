@@ -8,7 +8,7 @@ from pathlib import Path
 __all__ = ['load_config']
 
 
-CONFIG_FILE = Path('/etc/tablet-mode.json')
+CONFIG_FILE = Path('/etc/convertible-switch.json')
 LOGGER = getLogger('tabletmode')
 
 
