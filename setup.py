@@ -12,7 +12,7 @@ setup(
     packages=['convertbleswitch'],
     entry_points={
         'console_scripts': [
-            'setsysmode = convertbleswitch.cli:main'
+            'setsysmode = convertibleswitch.cli:main'
         ],
     },
     url='https://github.com/lirannl/convertible-switch',
