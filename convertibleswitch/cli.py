@@ -1,55 +1,76 @@
 """Sets the system mode."""
 
 from argparse import ArgumentParser, Namespace
-from asyncio import subprocess
-from subprocess import DEVNULL
-from subprocess import CalledProcessError
-from subprocess import CompletedProcess
-from subprocess import check_call
-from subprocess import run, check_output
-from os import environ, execv, system
+from genericpath import exists
+import json
+import os
+from posixpath import basename, dirname
+from os import environ, execv, execve, system
+from pwd import getpwnam
 import sys
-import re
-from typing import Optional
-from convertibleswitch.config import load_config
+
+user = getpwnam(environ.get("SUDO_USER") or environ.get("USER"))
 
 DESCRIPTION = "Switches a convertible device between modes"
-SUDO = "/usr/bin/sudo"
-
 
 def settings_setup():
-    device_data = map(lambda entry: entry.split(":"), check_output(
-        "sudo libinput list-devices | grep \"Device:\\|Capabilities:\\|Kernel:\"",
-        shell=True, text=True).split("\n")[:-1])
-    link_map_raw = check_output("""for device in `ls /dev/input/by-path`
-    do echo \"/dev/input/by-path/$device|$(readlink -f /dev/input/by-path/$device)\"
-    done""", shell=True, text=True).split("\n")[:-1]
-    link_map = {}
-    for link_raw in link_map_raw:
-        parts = link_raw.split("|")
-        link_map[parts[1]] = parts[0]
-    devices = [{}]
-    # Assign fields to devices
-    for entry in device_data:
-        try:
-            devices[-1][entry[0].lower()]
-            # Add link map to constructed device (if available)
-            try: 
-                devices[-1]["path"] = link_map[devices[-1]["kernel"]]
-            except KeyError:
-                devices[-1]["path"] = None
-            # Add next device
-            devices.append({})
-        except KeyError:
-            devices[-1][entry[0].lower()] = entry[1].strip()
-    pass
+    newConfig = {}
+    print("Enter devices from /sys/bus/drivers/ to be disabled, press enter to finish")
+    print("Hint: look in /sys/bus/usb/drivers/usbhid")
+    newConfig["devices"] = []
+    while True: 
+        line = sys.stdin.readline().rstrip()
+        if (line != ""): newConfig['devices'].append(line)
+        else: break
+    print("Enter shell command to be run when tablet mode is activated, press enter to finish")
+    newConfig["tablet_commands"] = []
+    while True: 
+        line = sys.stdin.readline().rstrip()
+        if (line != ""): newConfig['tablet_commands'].append(line)
+        else: break
+    print("Enter shell command to be run when laptop mode is activated, press enter to finish")
+    newConfig["laptop_commands"] = []
+    while True: 
+        line = sys.stdin.readline().rstrip()
+        if (line != ""): newConfig['laptop_commands'].append(line)
+        else: break
+    with open("/etc/convertible_switch.json", "w+") as configFile:
+        json.dump(newConfig, configFile)
 
+def toggle_devices(kernel_action: str):
+    with open("/etc/convertible_switch.json", "r") as configFile:
+        config = json.load(configFile)
+    devices = config.get("devices")
+    for device in devices:
+        open(f"{dirname(device)}/{kernel_action}", "w").write(basename(device))
+
+def run_commands(entry: str):
+    with open("/etc/convertible_switch.json", "r") as configFile:
+        config = json.load(configFile)
+    for command in config[entry]:
+        system(command)
+
+def is_laptop_mode():
+    with open("/etc/convertible_switch.json", "r") as configFile:
+        config = json.load(configFile)
+    dev = config["devices"][0]
+    return exists(f"{dev}/driver")
+
+def switch_modes(force: str = ""):
+    if (force == "tablet" or (is_laptop_mode() and force != "laptop")):
+        toggle_devices("unbind")
+        run_commands("tablet_commands")
+    else:
+        toggle_devices("bind")
+        run_commands("laptop_commands")
 
 modes = {
     None: lambda: "",
-    "init": settings_setup
+    "init": settings_setup,
+    "tablet": lambda: switch_modes("laptop"),
+    "laptop": lambda: switch_modes("tablet"),
+    "toggle": switch_modes
 }
-
 
 def get_args() -> Namespace:
     """Returns the CLI arguments."""
@@ -65,19 +86,19 @@ def get_args() -> Namespace:
     subparsers.add_parser('tablet', help='switch to tablet mode')
     return parser.parse_args()
 
-
 def main() -> None:
     """Runs the main program."""
+    if os.getuid() != 0:
+        execv("/usr/bin/sudo", ["/usr/bin/python"] + sys.orig_argv)
     args = get_args()
+    with open("/etc/convertible_switch.json", "r") as configFile:
+        config = json.load(configFile)
 
-    config = load_config()
-    sudo = config.get('sudo', SUDO)
-    notify = config.get('notify', False)
-
-    # If not root - elevate
-    if environ.get("USER") != "root":
-        return system(f"{sudo} {' '.join(sys.orig_argv)}")
+    try: 
+        notify = config['notify'] 
+    except KeyError:
+        notify = False
 
     modes[args.mode]()
 
-    print()
+    pass

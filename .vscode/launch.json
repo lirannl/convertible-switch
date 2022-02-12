@@ -9,8 +9,10 @@
             "type": "python",
             "request": "launch",
             "module": "convertibleswitch",
-            "args": ["init"],
-            "sudo": true
+            "args": [
+                "tablet"
+            ],
+            "sudo": true   
         }
     ]
 }

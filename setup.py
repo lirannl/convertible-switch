@@ -15,9 +15,9 @@ setup(
             'setsysmode = convertbleswitch.cli:main'
         ],
     },
-    url='https://github.com/conqp/tablet-mode',
+    url='https://github.com/lirannl/convertible-switch',
     license='GPLv3',
-    description='Tablet mode switch for libinput.',
+    description='Tablet mode switch for libinput. Devices are controlled at a kernel level, so that the DE can properly detect tablet mode usage',
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     keywords='tablet mode tent convertible switch'
