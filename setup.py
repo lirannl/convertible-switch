@@ -9,7 +9,7 @@ setup(
     author='Liran Piade',
     author_email='liranpiade@gmail.com',
     python_requires='>=3.8',
-    packages=['convertbleswitch'],
+    packages=['convertibleswitch'],
     entry_points={
         'console_scripts': [
             'setsysmode = convertibleswitch.cli:main'
