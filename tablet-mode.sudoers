@@ -5,4 +5,4 @@
 #
 ################################################################################
 
-%tablet ALL=(ALL) NOPASSWD: /usr/bin/sysmode
+%tablet ALL=(ALL) NOPASSWD: /usr/bin/setsysmode
