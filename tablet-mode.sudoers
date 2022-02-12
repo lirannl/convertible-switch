@@ -1,8 +1,0 @@
-# This file is part of tablet-mode.
-#
-# It allows users in the group "tablet" to toggle
-# the system between tablet and laptop mode.
-#
-################################################################################
-
-%tablet ALL=(ALL) NOPASSWD: /usr/bin/setsysmode
