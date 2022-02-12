@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(
-    name='convertbleswitch',
+    name='convertibleswitch',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
     author='Liran Piade',
