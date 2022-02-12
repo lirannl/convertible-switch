@@ -5,4 +5,4 @@
 #
 ################################################################################
 
-%tablet ALL=(ALL) NOPASSWD: /sbin/setsysmode toggle
+%tablet ALL = NOPASSWD: /sbin/python /sbin/setsysmode toggle
